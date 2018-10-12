@@ -14,16 +14,16 @@ struct Data {
 	}
 };
 
-std::ostream &operator<<(std::ostream &os, Data const &data) {
-	return os;
+std::ostream &operator<<(std::ostream &out, Data const &data) {
+	return out;
 }
 
-std::istream &operator>>(std::istream &is, Data &data) {
-	return is;
+std::istream &operator>>(std::istream &in, Data &data) {
+	return in;
 }
 
 struct Tests {
-	int const size = 0;
+	int const size = 1;
 	void DescribeTest(std::ostream& out, int index, bool input) const {
 		switch (index) {
 		case 0:
