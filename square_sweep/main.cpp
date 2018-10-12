@@ -9,10 +9,6 @@
 #include <utility>
 #include <vector>
 
-#ifdef TESTER_VERSION
-#include "../tester.hpp"
-#endif
-
 template <class InputIt, class BinaryOperation>
 InputIt consecutive_pairs(InputIt first, InputIt last, BinaryOperation binary_operation) {
 	if (first != last) {
@@ -35,7 +31,7 @@ struct Data {
 	std::vector<point_t> points;
 	int square_size;
 
-	void Solve() const {
+	void Solve(std::istream &in, std::ostream &out) const {
 		std::vector<event_x_t> events_x;
 		events_x.reserve(2 * points.size());
 		for (auto const &p : points) {
@@ -98,7 +94,7 @@ struct Data {
 		});
 
 		for (auto c : count) {
-			std::cout << c << " ";
+			out << c << " ";
 		}
 	}
 };
@@ -125,20 +121,21 @@ std::istream &operator>>(std::istream &is, Data &data) {
 }
 
 struct Tests {
+	int const size = 3;
 	void DescribeTest(std::ostream& out, int index, bool input) const {
 		if (index == 0) {
 			if (input) {
 				Data const data = {{{0, 0}}, 5};
-				std::cout << data;
+				out << data;
 			} else {
-				std::cout << "25 ";
+				out << "25 ";
 			}
 		} else if (index == 1) {
 			if (input) {
 				Data const data = {{{4, 5}, {4, 6}, {5, 5}, {5, 6}, {7, 7}}, 3};
-				std::cout << data;
+				out << data;
 			} else {
-				std::cout << "10 8 1 4 0 ";
+				out << "10 8 1 4 0 ";
 			}
 		} else if (index == 2) {
 			std::int64_t const n = 100000;
@@ -149,33 +146,13 @@ struct Tests {
 				for (int i = 0; i < n; ++i) {
 					data.points.push_back({0, 2 * i * square_size});
 				}
-				std::cout << data;
+				out << data;
 			} else {
-				std::cout << n * square_size * square_size << " ";
+				out << n * square_size * square_size << " ";
 				for (int i = 1; i < n; ++i) {
-					std::cout << "0 ";
+					out << "0 ";
 				}
 			}
 		}
 	}
-
-	int Size() const {
-		return 3;
-	}
 };
-
-int main(int argc, char *argv[]) {
-	std::ios_base::sync_with_stdio(false);
-	std::cin.tie(nullptr);
-
-#ifdef TESTER_VERSION
-	Tests tests;
-	return Dispatch(argc, argv, tests);
-#else
-	Data input;
-	std::cin >> input;
-	input.Solve();
-#endif
-	return 0;
-}
-

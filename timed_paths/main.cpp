@@ -9,10 +9,6 @@
 #include <utility>
 #include <vector>
 
-#ifdef TESTER_VERSION
-#include "../tester.hpp"
-#endif
-
 struct Data {
 	struct Road {
 		int a;
@@ -49,7 +45,7 @@ struct Data {
 		return false;
 	}
 
-	void Solve() const {
+	void Solve(std::istream &in, std::ostream &out) const {
 		struct IngoingPathInformation {
 			std::vector<std::vector<AvailablePath>> paths;
 		};
@@ -85,18 +81,18 @@ struct Data {
 		}
 
 //		for (int i = 1; i < intersections + 1; ++i) {
-//			std::cout << "==========I " << i << "\n";
+//			out << "==========I " << i << "\n";
 //			for (int o = 1; o < intersections + 1; ++o) {
-//				std::cout << o << " --> ";
+//				out << o << " --> ";
 //				for (auto const &p : intersection_info[i].paths[o]) {
-//					std::cout << " [" << p.start_time << ", " << p.finish_time << "]";
+//					out << " [" << p.start_time << ", " << p.finish_time << "]";
 //				}
-//				std::cout << "\n";
+//				out << "\n";
 //			}
 //		}
 		for (auto const &q : queries) {
 			bool const path_exists = PathExists(q, intersection_info[q.destination].paths[q.source]);
-			std::cout << (path_exists ? "Yes" : "No") << "\n";
+			out << (path_exists ? "Yes" : "No") << "\n";
 		}
 	}
 };
@@ -130,48 +126,29 @@ std::istream &operator>>(std::istream &is, Data &data) {
 }
 
 struct Tests {
+	int const size = 3;
 	void DescribeTest(std::ostream& out, int index, bool input) const {
 		if (index == 0) {
 			if (input) {
 				Data const data = {2, {{1, 2}}, {{1, 1, 1, 2}}};
-				std::cout << data;
+				out << data;
 			} else {
-				std::cout << "Yes\n";
+				out << "Yes\n";
 			}
 		} else if (index == 1) {
 			if (input) {
 				Data const data = {4, {{1, 2}, {2, 4}, {3, 4}, {1, 3}, {2, 3}}, {{1, 2, 1, 4}}};
-				std::cout << data;
+				out << data;
 			} else {
-				std::cout << "Yes\n";
+				out << "Yes\n";
 			}
 		} else if (index == 2) {
 			if (input) {
 				Data const data = {5, {{1, 2}, {2, 3}, {3, 4}, {3, 5}}, {{1, 3, 1, 4}, {1, 3, 2, 4}, {1, 4, 4, 5}, {1, 4, 4, 1}, {2, 3, 1, 4}, {2, 2, 2, 3}}};
-				std::cout << data;
+				out << data;
 			} else {
-				std::cout << "Yes\nYes\nYes\nNo\nNo\nYes\n";
+				out << "Yes\nYes\nYes\nNo\nNo\nYes\n";
 			}
 		}
 	}
-
-	int Size() const {
-		return 3;
-	}
 };
-
-int main(int argc, char *argv[]) {
-	std::ios_base::sync_with_stdio(false);
-	std::cin.tie(nullptr);
-
-#ifdef TESTER_VERSION
-	Tests tests;
-	return Dispatch(argc, argv, tests);
-#else
-	Data input;
-	std::cin >> input;
-	input.Solve();
-#endif
-	return 0;
-}
-
