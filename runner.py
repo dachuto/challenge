@@ -1,4 +1,5 @@
 import os
+import signal
 import subprocess
 import sys
 
@@ -37,44 +38,57 @@ if __name__ == '__main__':
 
 	for test_index in range(number_of_tests):
 		test_index_string = str(test_index)
-		tester_with_input_process = subprocess.Popen([tester_binary, 'input', test_index_string], stdout = subprocess.PIPE, universal_newlines = True)
-
-		child_process = subprocess.Popen(time_prefix + [solver_binary], stdin = tester_with_input_process.stdout, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines = True)
+		print(test_index_string.rjust(3) + ' # ', end='')
+		try:
+			tester_with_input_process = subprocess.Popen([tester_binary, 'input', test_index_string], stdout = subprocess.PIPE, universal_newlines = True)
+			tester_input_outs, tester_input_errors = tester_with_input_process.communicate(timeout = 1)
+		except subprocess.TimeoutExpired:
+			print("FAIL! test input binary timed out.")
+			tester_with_input_process.kill()
+			continue
 
 		try:
-			outs, errors = child_process.communicate(timeout = 5)
-			tester_with_input_process.communicate(timeout = 5)
 			tester_with_output_process = subprocess.Popen([tester_binary, 'output', test_index_string], stdout = subprocess.PIPE, universal_newlines = True)
-			tester_outs, tester_errors = tester_with_output_process.communicate(timeout = 5)
-
-			print(test_index_string.rjust(3) + ' # ', end='')
-			print_input = False
-			horizontal_length = 64
-			if (child_process.returncode != 0):
-				signal_info = ' (can be signal ' + str(child_process.returncode - 128) + ')' if child_process.returncode > 128 else ''
-				print(' FAIL! Process returned ' + str(tester_with_output_process.returncode) + signal_info)
-				print_input = True
-			else:
-				time_output = errors.split() #time writes on stderr
-				(clock_time, system_time, user_time, memory_used_in_kilobytes) = (float(time_output[0]), float(time_output[1]), float(time_output[2]), int(time_output[3]))
-				invalid_output = (outs != tester_outs)
-				print(' FAIL! ' if invalid_output else ' OK    ', end='')
-				print(' clock_time: ' + fancy.seconds(clock_time) + ' system_time: ' + fancy.seconds(system_time) + ' user_time: ' + fancy.seconds(user_time) + ' memory: ' + fancy.memory(memory_used_in_kilobytes) + ' ' + fancy.return_code(child_process.returncode) + fancy.return_code(tester_with_input_process.returncode) + fancy.return_code(tester_with_output_process.returncode))
-				if invalid_output:
-					print_input = True
-					print(' solver:'.rjust(horizontal_length, '-'))
-					print(outs)
-					print(' tester:'.rjust(horizontal_length, '-'))
-					print(tester_outs)
-			if print_input:
-				tester_with_input_process_for_check = subprocess.Popen([tester_binary, 'input', test_index_string], stdout = subprocess.PIPE, universal_newlines = True)
-				check_outs, check_errors = tester_with_input_process_for_check.communicate(timeout = 5)
-				print(' input:'.rjust(horizontal_length, '-'))
-				print(check_outs)
-
-
+			tester_outs, tester_errors = tester_with_output_process.communicate(timeout = 1)
 		except subprocess.TimeoutExpired:
-			child_process.kill()
-			tester_with_input_process.kill()
+			print("FAIL! test output binary timed out.")
 			tester_with_output_process.kill()
-			tester_with_input_process_for_check.kill()
+			continue
+
+		try:
+			child_process = subprocess.Popen(time_prefix + [solver_binary], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines = True)
+			child_process.stdin.write(tester_input_outs)
+			outs, errors = child_process.communicate(timeout = 3)
+		except subprocess.TimeoutExpired:
+			print('FAIL! solver timed out.')
+			pgrep = subprocess.run(['pgrep', '-P', str(child_process.pid)], stdout = subprocess.PIPE, check = True)
+			os.kill(int(pgrep.stdout), signal.SIGKILL)
+			child_process.kill()
+			outs, errors = child_process.communicate()
+			print('Output:')
+			print(outs)
+			continue
+
+		print_input = False
+		horizontal_length = 64
+		if (child_process.returncode != 0):
+			signal_info = ' (can be signal ' + str(child_process.returncode - 128) + ')' if child_process.returncode > 128 else ''
+			print(' FAIL! Process returned ' + str(tester_with_output_process.returncode) + signal_info)
+			print_input = True
+		else:
+			time_output = errors.split() #time writes on stderr
+			(clock_time, system_time, user_time, memory_used_in_kilobytes) = (float(time_output[0]), float(time_output[1]), float(time_output[2]), int(time_output[3]))
+			invalid_output = (outs != tester_outs)
+			print(' FAIL! ' if invalid_output else ' OK    ', end='')
+			print(' clock_time: ' + fancy.seconds(clock_time) + ' system_time: ' + fancy.seconds(system_time) + ' user_time: ' + fancy.seconds(user_time) + ' memory: ' + fancy.memory(memory_used_in_kilobytes) + ' ' + fancy.return_code(child_process.returncode) + fancy.return_code(tester_with_input_process.returncode) + fancy.return_code(tester_with_output_process.returncode))
+			if invalid_output:
+				print_input = True
+				print(' solver:'.rjust(horizontal_length, '-'))
+				print(outs)
+				print(' tester:'.rjust(horizontal_length, '-'))
+				print(tester_outs)
+		if print_input:
+			tester_with_input_process_for_check = subprocess.Popen([tester_binary, 'input', test_index_string], stdout = subprocess.PIPE, universal_newlines = True)
+			check_outs, check_errors = tester_with_input_process_for_check.communicate(timeout = 5)
+			print(' input:'.rjust(horizontal_length, '-'))
+			print(check_outs)
