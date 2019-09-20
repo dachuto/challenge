@@ -10,6 +10,8 @@ function(program task_directory)
 	set(tester_source ${CMAKE_CURRENT_BINARY_DIR}/${task_directory}_tester.cpp)
 	add_executable(${solver} ${solver_source})
 	add_executable(${tester} ${tester_source})
+	set_property(TARGET ${solver} PROPERTY CXX_STANDARD 17)
+	set_property(TARGET ${tester} PROPERTY CXX_STANDARD 17)
 	add_custom_command(
 		OUTPUT ${solver_source}
 		DEPENDS ${task_directory}/main.cpp solver_main.cpp
@@ -25,8 +27,8 @@ function(program task_directory)
 	add_custom_command(
 		TARGET ${solver} ${tester}
 		POST_BUILD
-		COMMAND echo "python3.6 ${CMAKE_CURRENT_SOURCE_DIR}/runner.py $<TARGET_FILE:${solver}> $<TARGET_FILE:${tester}>"
-		COMMAND python3.6 ${CMAKE_CURRENT_SOURCE_DIR}/runner.py $<TARGET_FILE:${solver}> $<TARGET_FILE:${tester}>
+		COMMAND echo "python3 ${CMAKE_CURRENT_SOURCE_DIR}/runner.py $<TARGET_FILE:${solver}> $<TARGET_FILE:${tester}>"
+		COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/runner.py $<TARGET_FILE:${solver}> $<TARGET_FILE:${tester}>
 		COMMENT "Testing ${task_directory}"
 		VERBATIM)
 
